@@ -1,0 +1,51 @@
+Nume:	Culincu Diana Cristina
+
+
+Cerinta:
+Realizarea unui sistem de partajare a fisierelor In retea.
+Dezvoltarea unei aplicatii client-server folosind socketi TCP pentru schimbul de mesaje si fisiere. In cadrul sistemului se considera existenta a doua tipuri de entitati: clienti si un server central ce ajuta la descoperirea clientilor.
+La pornire serverul va primi ca parametru un port pe care va asculta cereri de conexiune. Modul de apelare al serverului este:
+./server <port_server>
+Un client va primi ca parametru al executiei un nume cu ajutorul caruia se va identifica In sistem, un port pe care va astepta conexiuni din partea altor clienti, adresa si portul serverului central de descoperire (se considera existenta unui singur astfel de server In sistem). Modul de rulare al unui client este urmatorul:
+./client <nume_client> <port_client> <ip_server> <port_server> 
+Serverul va fi folosit pentru descoperirea clientilor conectati iar trimiterea de mesaje si de fisiere se va realiza direct intre clienti. Atat serverul cat si clientii vor porni un server socket si vor folosi apelul select pentru multiplexarea comunicatiei.
+La pornire serverul va crea un socket si va astepta cereri de conexiune pe portul specificat. Un client se conecteaza la serverul central si trimite datele de identificare (numele primit la pornire, portul pe care asculta eventuale cereri de conexiune). Serverul poate raspunde cu accept sau reject, In functie de 
+numele clientului (daca deja exista un client In sistem cu respectivul nume deoarece nu sunt admise duplicate de nume). Serverul va retine pentru fiecare client conectat adresa IP, numele si portul pe care acesta asculta. 
+
+
+Comenzi implementate:
+
+client:	
+	- listclients	-Clientul trimite o cerere serverului care ii va intoarce lista tuturor clientilor conectati. Lista clientilor va
+fi afisata la consola.
+	- infoclient	-I se cer serverului si se vor afisa informatii suplimentare despre un client. Serverul va intoarce numele 
+clientului, portul pe care acesta asculta si timpul scurs de la conectarea acestuia la server.
+	- history		-Se afiseaza la consola toate mesajele si numele fisierelor primite e catre client de la pornirea sa. Ordinea de afisare este aceeasi cu ordinea in care s-au dat comenzile. 
+	- quit			-Clientul trimite un mesaj serverului prin care anunta ca va parasi sistemul, inchide toate conexiunile si 
+iese.
+	- message		-Se trimite un mesaj unui alt client. Aceasta se face prin realizarea unei conexiuni directe la clientul caretrebuie sa primeasca mesajul. Clientul destinatie va afisa mesajul primit si numele clientului de la care l-a primit. Afisarea mesajului primit va fi sub forma:  [Timestamp][Sursa]Mesaj
+	- broadcast		-Functioneaza asemanator cu comanda message, dar este trimis un mesaj catre toti clientii inregistrati in 
+server in acel moment. 
+
+server:	
+	- quit			-Se inchide serverul. Cand clientii detecteaza ca a fost inchisa conexiunea cu serverul vor iesi si ei.
+	- kick			-Elimina un client din sistem. Ii trimite un mesaj clientului ca sa il anunte ca trebuie sa inchida si il 
+elimina din lista de clienti activi. 
+	- status		-Afiseaza lista clientilor conectati, adresele lor ip si porturile pe care acestea asculta
+
+
+Mentiuni:
+- daca pentru message sau broadcast se trimit mai multe cuvinte, tot textul trebuie pus intre ghilimele
+- in Makefile clean se face automat, dar se poate face si separat
+- e mai bine de evitat numele clientilor care pot sa fie un substring al lui "kick" sau "quit" sau "none" deoarece in implementare am folosit strstr si caut in intreg bufferul, asta incluzand si comanda propriu-zisa
+- procesarea comenzilor se face in general la server, cu exceptia history, unde comanda e procesata exclusiv de client
+- primirile de message si broadcast se salveaza intr-un fisier de forma nume_client.txt
+- fisierul client.cpp are numai functia main, restul functiilor sunt definite in errors.h si implementate in func.cpp
+- fisierul server.cpp are numai functia main, restul functiilor sunt definite in errors.h si server.h si si implementate in serv.cpp
+- la server am folosit un vector de structuri care retine clientii si date despre acestia(nume, port socket, etc) pentru ca e mai usor de cautat asa dupa anumite criterii in clientii conectati
+- inainte de realizarea bindului, serverul verifica daca clientul care vrea sa se conecteze are datele corecte (daca numele sau portul nu sunt deja folosite de un alt client conectat). Daca totul e ok, trimit feed-back clientului si il adauga in vectorul de structuri. Altfel, refuza conexiunea.
+- mesajele din message si broadcast sunt afisate pur si simplu la consola (si bineinteles stocate si in fisierul pentru history)
+- cand serverul da kick sau quit, inainte sa inchida socketul, trimite mesaj si la clientul respectiv ca acesta sa stie sa se inchida
+- cand clientul da quit, inainte sa se inchida, trimite mesaj si la server ca sa stie ce socket sa inchida si ce intrare din vectorul de structuri sa elimine 
+- am folosit scheletul de la laboratorul de TCP si google (portiunea de fseek, ftell din client)
+- un client isi primeste propriul broadcast
